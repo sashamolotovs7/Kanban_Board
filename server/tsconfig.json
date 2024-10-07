@@ -9,11 +9,13 @@
     "allowJs": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "types": ["node", "bcrypt"]
+    "types": ["node", "bcrypt"],
+    "outDir": "./dist"
   },
   "include": [
     "src/**/*.ts",
-    "tests/**/*.ts"
+    "tests/**/*.ts",
+    "seeds/**/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -25,9 +25,7 @@ app.use('/auth', authRoutes); // Authentication routes (login, signup)
 // Use other API routes
 app.use('/api', apiRoutes); // Other API routes (tickets, users)
 // Serve index.html for any other routes (SPA routing for React)
-app.get('*', (_req, res) => {
-    // Log the request path for debugging purposes
-    console.log(`Received request for: ${_req.path}`);
+app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
 });
 // Sync database and start the server
@@ -41,3 +39,4 @@ sequelize.sync({ force: false })
     .catch((error) => {
     console.error("Error syncing database:", error);
 });
+//# sourceMappingURL=server.js.map

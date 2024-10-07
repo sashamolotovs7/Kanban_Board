@@ -33,7 +33,10 @@ app.use('/auth', authRoutes);  // Authentication routes (login, signup)
 app.use('/api', apiRoutes);    // Other API routes (tickets, users)
 
 // Serve index.html for any other routes (SPA routing for React)
-app.get('*', (req, res) => {
+app.get('*', (_req, res) => {
+  // Log the request path for debugging purposes
+  console.log(`Received request for: ${_req.path}`);
+  
   res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
 });
 
