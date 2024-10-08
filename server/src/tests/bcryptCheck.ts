@@ -2,25 +2,26 @@ import bcrypt from 'bcrypt';
 import { User } from '../models/user.js';
 
 export const seedUsers = async () => {
-  try {
     console.log('Seeding users...');
 
     const users = [
-      { username: 'SunnyScribe', password: 'password' },
-      { username: 'JollyGuru', password: 'password123' },
-      { username: 'RadiantComet', password: 'password1' },
-      { username: 'TestUser', password: 'password3' },
+        { username: 'SunnyScribe', password: 'password' },
+        { username: 'JollyGuru', password: 'password123' },
+        { username: 'RadiantComet', password: 'password1' },
+        { username: 'TestUser', password: 'password2' },  // Changed 'password3' to 'password2' to align with your original seed data
     ];
 
     for (const user of users) {
-      // Hash the password before storing it in the database
-      const hashedPassword = await bcrypt.hash(user.password, 10);
-      await User.create({ username: user.username, password: hashedPassword });
-      console.log(`Hashed password for ${user.username}: ${hashedPassword}`);
-    }
+        const hashedPassword = await bcrypt.hash(user.password, 10);
+        console.log(`Hashed password for ${user.username}: ${hashedPassword}`);
+        
+        // Immediately check the hashed password
+        const isMatch = await bcrypt.compare(user.password, hashedPassword);
+        console.log(`Password check for ${user.username}: ${isMatch ? "Success" : "Failure"}`);
 
-    console.log('Users seeded successfully.');
-  } catch (error) {
-    console.error('Error seeding users:', error);
-  }
+        // Optionally create user in the database (commented out for safety during tests)
+        // await User.create({ username: user.username, password: hashedPassword });
+    }
 };
+
+seedUsers().catch(console.error);

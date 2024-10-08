@@ -5,118 +5,77 @@ import bcrypt from 'bcrypt';
 
 const router = Router();
 
-// Compare password function
+// Compare password function with added logging
 const comparePassword = async (inputPassword: string, storedHash: string) => {
-  const match = await bcrypt.compare(inputPassword, storedHash);
-  console.log(`Password match for "${inputPassword}":`, match);
-  return match;
+    console.log(`Comparing entered password with hash in database...`);
+    const match = await bcrypt.compare(inputPassword, storedHash);
+    console.log(`Password match for "${inputPassword}": ${match}`);
+    return match;
 };
 
-// Login route
+// Login route with detailed logs
 export const login = async (req: Request, res: Response): Promise<Response> => {
-  try {
-    const { username, password } = req.body;
+    try {
+        const { username, password } = req.body;
+        console.log(`Login attempt: username=${username}, entered password=${password}`);
 
-    // Log the login attempt
-    console.log(`Login attempt: username=${username}, entered password=${password}`);
+        const user = await User.findOne({ where: { username } });
+        if (!user) {
+            console.log(`User ${username} not found`);
+            return res.status(403).json({ message: 'Invalid username or password' });
+        }
 
-    // Find the user by username
-    const user = await User.findOne({ where: { username } });
-    if (!user) {
-      console.log(`User ${username} not found`);
-      return res.status(403).json({ message: 'Invalid username or password' });
+        console.log(`Stored hashed password for ${username}: ${user.password}`);
+        const isMatch = await comparePassword(password, user.password);
+
+        if (!isMatch) {
+            console.log(`Password mismatch for ${username}`);
+            return res.status(403).json({ message: 'Invalid username or password' });
+        }
+
+        const token = jwt.sign(
+            { id: user.id, username: user.username },
+            process.env.JWT_SECRET as string,
+            { expiresIn: '1h' }
+        );
+
+        console.log(`Login successful for ${username}, token: ${token}`);
+        return res.json({ token });
+    } catch (error) {
+        console.error('Error in login route:', error);
+        return res.status(500).json({ message: 'Internal server error' });
     }
-
-    // Log the stored hashed password for debugging
-    console.log(`Stored hashed password for ${username}: ${user.password}`);
-
-    // Compare the entered password with the stored hashed password
-    const isMatch = await comparePassword(password, user.password);
-
-    // Log the password comparison result
-    console.log('Entered password:', password);
-    console.log('Stored hashed password:', user.password);
-    console.log('Password match result:', isMatch);
-
-    if (!isMatch) {
-      console.log(`Password mismatch for ${username}`);
-      return res.status(403).json({ message: 'Invalid username or password' });
-    }
-
-    // Log the JWT secret
-    console.log('JWT Secret:', process.env.JWT_SECRET);
-
-    // Generate a JWT token
-    const token = jwt.sign(
-      { id: user.id, username: user.username },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '1h' }
-    );
-
-    console.log(`Login successful for ${username}`);
-
-    // Return the JWT token in the response
-    return res.json({ token });
-  } catch (error) {
-    console.error('Error in login route:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
 };
 
-// Signup route
+// Signup route with detailed logs
 export const signup = async (req: Request, res: Response): Promise<Response> => {
-  try {
-    const { username, password } = req.body;
-    console.log(`Signing up with username: ${username}`);
+    try {
+        const { username, password } = req.body;
+        console.log(`Signup attempt with username: ${username}`);
 
-    // Check if the user already exists
-    const existingUser = await User.findOne({ where: { username } });
-    if (existingUser) {
-      console.log(`User ${username} already exists`);
-      return res.status(400).json({ message: 'Username already taken' });
+        const existingUser = await User.findOne({ where: { username } });
+        if (existingUser) {
+            console.log(`User ${username} already exists`);
+            return res.status(400).json({ message: 'Username already taken' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        console.log(`Generated hash for ${username}: ${hashedPassword}`);
+
+        const newUser = await User.create({ username, password: hashedPassword });
+        const token = jwt.sign(
+            { id: newUser.id, username: newUser.username },
+            process.env.JWT_SECRET as string,
+            { expiresIn: '1h' }
+        );
+
+        console.log(`Signup successful for ${username}, token: ${token}`);
+        return res.status(201).json({ token });
+    } catch (error) {
+        console.error('Error in signup route:', error);
+        return res.status(500).json({ message: 'Internal server error' });
     }
-
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    console.log(`Hashed password for ${username}: ${hashedPassword}`);
-
-    // Create the new user in the database
-    const newUser = await User.create({ username, password: hashedPassword });
-
-    // Log the JWT secret
-    console.log('JWT Secret:', process.env.JWT_SECRET);
-
-    // Generate a JWT for the new user
-    const token = jwt.sign(
-      { id: newUser.id, username: newUser.username },
-      process.env.JWT_SECRET as string,
-      { expiresIn: '1h' }
-    );
-
-    console.log(`Signup successful for ${username}`);
-
-    // Return the JWT token in the response
-    return res.status(201).json({ token });
-  } catch (error) {
-    console.error('Error in signup route:', error);
-    return res.status(500).json({ message: 'Internal server error' });
-  }
 };
-
-// Test password match after server starts
-const testPasswordMatch = async () => {
-  const username = 'TestUser123';
-  const password = 'testpassword'; // Password you are trying to log in with
-  const user = await User.findOne({ where: { username } });
-  
-  if (user) {
-    await comparePassword(password, user.password);
-  } else {
-    console.log(`User ${username} not found.`);
-  }
-};
-
-testPasswordMatch(); // Call the function to generate and log the hash
 
 // Register routes
 router.post('/login', login);
