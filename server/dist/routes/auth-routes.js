@@ -3,13 +3,6 @@ import { User } from '../models/user.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 const router = Router();
-// Compare password function with added logging
-const comparePassword = async (inputPassword, storedHash) => {
-    console.log(`Comparing entered password with hash in database...`);
-    const match = await bcrypt.compare(inputPassword, storedHash);
-    console.log(`Password match for "${inputPassword}": ${match}`);
-    return match;
-};
 // Login route with detailed logs
 export const login = async (req, res) => {
     try {
@@ -21,9 +14,10 @@ export const login = async (req, res) => {
             return res.status(403).json({ message: 'Invalid username or password' });
         }
         console.log(`Stored hashed password for ${username}: ${user.password}`);
-        const isMatch = await comparePassword(password, user.password);
+        const isMatch = await bcrypt.compare(password, user.password);
+        console.log("Password comparison result:", isMatch);
         if (!isMatch) {
-            console.log(`Password mismatch for ${username}`);
+            console.log("Password does not match for user:", username);
             return res.status(403).json({ message: 'Invalid username or password' });
         }
         const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -45,9 +39,7 @@ export const signup = async (req, res) => {
             console.log(`User ${username} already exists`);
             return res.status(400).json({ message: 'Username already taken' });
         }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        console.log(`Generated hash for ${username}: ${hashedPassword}`);
-        const newUser = await User.create({ username, password: hashedPassword });
+        const newUser = await User.create({ username, password });
         const token = jwt.sign({ id: newUser.id, username: newUser.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
         console.log(`Signup successful for ${username}, token: ${token}`);
         return res.status(201).json({ token });

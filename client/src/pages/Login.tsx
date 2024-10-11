@@ -7,8 +7,8 @@ const Login = () => {
     username: '',
     password: ''
   });
+  const [error, setError] = useState('');  // State to hold error message
 
-  // Handle input field changes
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setLoginData({
@@ -17,18 +17,15 @@ const Login = () => {
     });
   };
 
-  // Handle form submission
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-
-    // Log the form data to ensure that both username and password are populated
-    console.log("Attempting to login with:", loginData); 
-
     try {
       const data = await login(loginData);
       Auth.login(data.token); // Assuming this stores the token in localStorage
+      setError(''); // Clear any previous error
     } catch (err) {
       console.error('Failed to login', err);
+      setError("Invalid username or password");  // Set error message on authentication failure
     }
   };
 
@@ -53,6 +50,7 @@ const Login = () => {
           required
         />
         <button type='submit'>Submit Form</button>
+        {error && <p style={{ color: 'red' }}>{error}</p>}
       </form>
     </div>
   );

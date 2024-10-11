@@ -25,7 +25,7 @@ const User = UserFactory(sequelize);
 const Ticket = TicketFactory(sequelize);
 // Define relationships between models
 User.hasMany(Ticket, { foreignKey: 'assignedUserId' });
-Ticket.belongsTo(User, { foreignKey: 'assignedUserId', as: 'assignedUser' });
+Ticket.belongsTo(User, { foreignKey: 'assignedUserId' }); // Remove the `as` alias here
 // Sync the database models in order
 sequelize.sync({ force: false })
     .then(() => {

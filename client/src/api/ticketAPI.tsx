@@ -2,10 +2,19 @@ import { TicketData } from '../interfaces/TicketData';
 import { ApiMessage } from '../interfaces/ApiMessage';
 import Auth from '../utils/auth';
 
-const retrieveTickets = async () => {
+interface RetrieveTicketsParams {
+  sortBy?: string;
+  filterByDate?: string;
+}
+
+const retrieveTickets = async ({ sortBy, filterByDate }: RetrieveTicketsParams) => {
   try {
+    const queryParams = new URLSearchParams();
+    if (sortBy) queryParams.append('sortBy', sortBy);
+    if (filterByDate) queryParams.append('filterByDate', filterByDate);
+
     const response = await fetch(
-      '/api/tickets/',
+      `/api/tickets/?${queryParams.toString()}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -13,15 +22,16 @@ const retrieveTickets = async () => {
         }
       }
     );
+
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error('invalid API response, check network tab!');
+      throw new Error('Invalid API response, check network tab!');
     }
 
     return data;
   } catch (err) {
-    console.log('Error from data retrieval: ', err);
+    console.error('Error from data retrieval: ', err);
     return [];
   }
 };
@@ -45,7 +55,7 @@ const retrieveTicket = async (id: number | null): Promise<TicketData> => {
     }
     return data;
   } catch (err) {
-    console.log('Error from data retrieval: ', err);
+    console.error('Error from data retrieval: ', err);
     return Promise.reject('Could not fetch singular ticket');
   }
 };
@@ -72,7 +82,7 @@ const createTicket = async (body: TicketData) => {
     return data;
 
   } catch (err) {
-    console.log('Error from ticket creation: ', err);
+    console.error('Error from ticket creation: ', err);
     return Promise.reject('Could not create ticket');
   }
 };

@@ -1,25 +1,26 @@
 import { DataTypes, Sequelize, Model, Optional } from 'sequelize';
 import bcrypt from 'bcrypt';
 
-// Define User attributes and creation attributes
+// Define the attributes for the User model
 interface UserAttributes {
   id: number;
   username: string;
   password: string;
 }
 
+// Define the creation attributes (since 'id' is auto-generated, it is optional when creating a new User)
 interface UserCreationAttributes extends Optional<UserAttributes, 'id'> {}
 
-// Define the User class
+// Define the User model class
 export class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
-  public id!: number;
+  public id!: number; // '!' makes it non-null after creation
   public username!: string;
   public password!: string;
 
-  public readonly createdAt!: Date;
+  public readonly createdAt!: Date; // Sequelize timestamps
   public readonly updatedAt!: Date;
 
-  // Method to compare passwords
+  // Instance method to compare the password with the hashed password
   public async comparePassword(plainPassword: string): Promise<boolean> {
     return await bcrypt.compare(plainPassword, this.password);
   }
@@ -45,14 +46,16 @@ export function UserFactory(sequelize: Sequelize): typeof User {
       },
     },
     {
-      tableName: 'users',
-      sequelize,
+      tableName: 'users', // Set the table name in the database
+      sequelize, // Pass the Sequelize instance
       hooks: {
+        // Hook to hash the password before saving a new user
         beforeCreate: async (user: User) => {
           console.log('Hashing password for user:', user.username);
           user.password = await bcrypt.hash(user.password, 10);
           console.log('Password hashed for user:', user.username);
         },
+        // Hook to hash the password before updating the user if the password is changed
         beforeUpdate: async (user: User) => {
           if (user.changed('password')) {
             console.log('Updating password for user:', user.username);
@@ -60,7 +63,7 @@ export function UserFactory(sequelize: Sequelize): typeof User {
             console.log('Password updated for user:', user.username);
           }
         },
-      }
+      },
     }
   );
 

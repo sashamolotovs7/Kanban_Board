@@ -1,6 +1,4 @@
 import dotenv from 'dotenv';
-dotenv.config();
-
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
@@ -9,9 +7,22 @@ import { sequelize } from './models/index.js';
 import authRoutes from './routes/auth-routes.js';
 import apiRoutes from './routes/api/index.js';
 
-// Resolve __filename and __dirname in ES module environment
+// This line will get the current file path and then use it to set the __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Configure dotenv; ensure the path is correct especially if the .env file is in the server directory but not in the root of your project
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+// Improved Environment Variables logging to confirm loading
+console.log("Environment Variables Loaded:");
+console.log(`DB_NAME: ${process.env.DB_NAME}`);
+console.log(`DB_USER: ${process.env.DB_USER}`);
+console.log(`DB_PASSWORD: ${process.env.DB_PASSWORD}`);
+console.log(`DB_HOST: ${process.env.DB_HOST}`);
+console.log(`DB_PORT: ${process.env.DB_PORT}`);
+console.log(`JWT_SECRET: ${process.env.JWT_SECRET}`);
+console.log(`PORT: ${process.env.PORT}`);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,6 +34,7 @@ app.use(cors({
 }));
 
 // Serve static files from the client build directory
+// Adjust the path as needed if your directory structure is different
 app.use(express.static(path.join(__dirname, '../../client/dist')));
 app.use(express.json());
 
@@ -51,4 +63,3 @@ sequelize.sync({ force: false })
   .catch((error) => {
     console.error("Error syncing database:", error);
   });
-

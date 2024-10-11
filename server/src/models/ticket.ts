@@ -1,16 +1,21 @@
 import { DataTypes, Sequelize, Model, Optional } from 'sequelize';
-import { User } from './user';
+import { User } from './user.js';
 
+// Define the attributes of the Ticket model
 interface TicketAttributes {
   id: number;
   name: string;
   status: string;
   description: string;
   assignedUserId?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-interface TicketCreationAttributes extends Optional<TicketAttributes, 'id'> {}
+// Define optional attributes for creating a ticket (like ID is optional)
+interface TicketCreationAttributes extends Optional<TicketAttributes, 'id'> { }
 
+// Ticket class representing the tickets table
 export class Ticket extends Model<TicketAttributes, TicketCreationAttributes> implements TicketAttributes {
   public id!: number;
   public name!: string;
@@ -21,10 +26,12 @@ export class Ticket extends Model<TicketAttributes, TicketCreationAttributes> im
   // associated User model
   public readonly assignedUser?: User;
 
+  // Timestamps
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
 
+// Factory function to define the Ticket model
 export function TicketFactory(sequelize: Sequelize): typeof Ticket {
   Ticket.init(
     {
@@ -49,12 +56,25 @@ export function TicketFactory(sequelize: Sequelize): typeof Ticket {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      createdAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW, // Automatically set creation time
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW, // Automatically set update time
+      },
     },
     {
       tableName: 'tickets',
       sequelize,
     }
   );
+
+  // Optionally associate Ticket with the User model
+  Ticket.belongsTo(User, { foreignKey: 'assignedUserId', as: 'assignedUser' });
 
   return Ticket;
 }

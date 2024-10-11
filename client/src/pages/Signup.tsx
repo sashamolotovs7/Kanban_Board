@@ -1,50 +1,62 @@
 // src/pages/Signup.tsx
-import { useState } from 'react';
+import { useState, FormEvent, ChangeEvent } from "react";
 import { useNavigate } from 'react-router-dom';
-import { signup } from '../api/authAPI';
+import Auth from '../utils/auth';
+import { signup } from "../api/authAPI";
 
 const Signup = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [signupData, setSignupData] = useState({
+    username: '',
+    password: ''
+  });
   const navigate = useNavigate();
 
-  const handleSignup = async (e: React.FormEvent) => {
+  // Handle input field changes
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setSignupData({
+      ...signupData,
+      [name]: value
+    });
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    // Log the form data to ensure that both username and password are populated
+    console.log("Attempting to signup with:", signupData);
+
     try {
-      const result = await signup({ username, password });
-      console.log('Signup successful, token:', result.token);
-      navigate('/');
+      const data = await signup(signupData);
+      Auth.login(data.token); // Assuming this stores the token in localStorage
+      navigate('/'); // Navigate to main or dashboard page after successful signup
     } catch (err) {
-      console.error('Signup error:', err);
-      setError('Signup failed, please try again');
+      console.error('Failed to signup', err);
     }
   };
 
   return (
-    <div>
-      <h1>Sign Up</h1>
-      <form onSubmit={handleSignup}>
-        <div>
-          <label>Username:</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Password:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        {error && <p>{error}</p>}
-        <button type="submit">Sign Up</button>
+    <div className='container'>
+      <form className='form' onSubmit={handleSubmit}>
+        <h1>Sign Up</h1>
+        <label>Username</label>
+        <input 
+          type='text'
+          name='username'
+          value={signupData.username || ''}
+          onChange={handleChange}
+          required
+        />
+        <label>Password</label>
+        <input 
+          type='password'
+          name='password'
+          value={signupData.password || ''}
+          onChange={handleChange}
+          required
+        />
+        <button type='submit'>Submit Form</button>
       </form>
     </div>
   );

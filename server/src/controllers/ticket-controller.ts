@@ -90,3 +90,18 @@ export const deleteTicket = async (req: Request, res: Response) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// GET /tickets/available-dates
+export const getAvailableDates = async (req: Request, res: Response) => {
+  try {
+    const dates = await Ticket.findAll({
+      attributes: ['createdAt'],
+      group: ['createdAt'],
+      order: [['createdAt', 'ASC']],
+    });
+    const uniqueDates = dates.map(date => date.createdAt);
+    res.json(uniqueDates);
+  } catch (error: any) {
+    res.status(500).json({ message: 'Error fetching available dates' });
+  }
+};
